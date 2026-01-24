@@ -3,81 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SUDOKU NEON LEGEND</title>
+    <title>SUDOKU NEON LEGEND v6.0</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { 
             --bg: #050505; --text: #f0f0f0; --grid: #333; 
-            --cell: rgba(26, 26, 26, 0.8); --accent: #00f2ff; 
-            --fixed: #00f2ff; --highlight: rgba(0, 242, 255, 0.2); --wrong: #ff5252;
+            --cell: rgba(20, 20, 20, 0.85); --accent: #00f2ff; 
+            --bubble: rgba(0, 242, 255, 0.3);
         }
 
-        /* Anti-Drop Lockdown */
+        /* Dark Themes */
+        body.theme-cyber { --bg: #0a000a; --accent: #ff00ff; --bubble: rgba(255, 0, 255, 0.3); }
+        body.theme-lava { --bg: #0f0202; --accent: #ff4d00; --bubble: rgba(255, 77, 0, 0.3); }
+        body.theme-matrix { --bg: #000800; --accent: #00ff41; --bubble: rgba(0, 255, 65, 0.3); }
+        body.theme-void { --bg: #050a1a; --accent: #7000ff; --bubble: rgba(112, 0, 255, 0.3); }
+
         html, body { 
             position: fixed; overflow: hidden; width: 100%; height: 100%; 
             background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; 
             display: flex; flex-direction: column; align-items: center; margin: 0; 
-            touch-action: none; transition: background 0.5s;
+            touch-action: none; transition: background 0.6s ease;
         }
 
-        /* Bubble Engine Layer */
         #bubble-layer { position: absolute; width: 100%; height: 100%; z-index: -1; overflow: hidden; pointer-events: none; }
-        .b-obj { position: absolute; background: var(--accent); opacity: 0.4; filter: blur(2px); box-shadow: 0 0 15px var(--accent); border-radius: 50%; animation: floatU 8s infinite linear; }
-        @keyframes floatU { from { transform: translateY(110vh) rotate(0); } to { transform: translateY(-10vh) rotate(360deg); } }
+        .b-obj { position: absolute; background: var(--bubble); filter: blur(2px); box-shadow: 0 0 15px var(--bubble); animation: floatU 10s infinite linear; }
+        
+        /* Floating Shapes per theme */
+        .theme-cyber .b-obj { border-radius: 50%; }
+        .theme-lava .b-obj { transform: rotate(45deg); border-radius: 20%; }
+        .theme-matrix .b-obj { border-radius: 0; width: 2px !important; }
+        .theme-void .b-obj { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
 
-        .header { width: 95vw; max-width: 400px; display: flex; justify-content: space-between; align-items: center; margin: 15px 0 10px; z-index: 5; }
-        .stats { display: flex; gap: 10px; }
-        .stat-box { background: rgba(0,0,0,0.6); border: 1px solid var(--accent); padding: 5px 10px; border-radius: 8px; font-size: 14px; min-width: 60px; text-align: center; box-shadow: 0 0 10px var(--accent); }
+        @keyframes floatU { from { transform: translateY(110vh) rotate(0); } to { transform: translateY(-15vh) rotate(360deg); } }
+
+        .header { width: 95vw; max-width: 400px; display: flex; justify-content: space-between; margin: 15px 0 10px; z-index: 5; }
+        .stat-box { background: rgba(0,0,0,0.6); border: 1px solid var(--accent); padding: 5px 8px; border-radius: 8px; font-size: 12px; box-shadow: 0 0 10px var(--accent); }
+
+        .controls { width: 95vw; max-width: 400px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; z-index: 5; }
+        select, .btn-main { background: rgba(0,0,0,0.8); color: var(--accent); border: 1px solid var(--accent); padding: 10px; border-radius: 8px; font-weight: bold; }
 
         #grid { 
             display: grid; grid-template-columns: repeat(9, 1fr); 
             border: 2px solid var(--accent); background: var(--grid); 
-            gap: 1px; width: 95vw; max-width: 400px; aspect-ratio: 1; 
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); z-index: 5;
-            backdrop-filter: blur(5px);
+            gap: 1px; width: 95vw; max-width: 400px; aspect-ratio: 1; z-index: 5;
         }
         .cell { 
             background: var(--cell); display: flex; align-items: center; justify-content: center; 
-            font-size: 20px; cursor: pointer; transition: 0.1s; position: relative;
+            font-size: 19px; transition: 0.15s;
         }
         .cell.selected { background: rgba(255,255,255,0.1); box-shadow: inset 0 0 0 2px var(--accent); }
-        .cell.focus-num { background: var(--highlight) !important; text-shadow: 0 0 10px var(--accent); font-size: 24px; }
-        .cell.fixed { color: var(--fixed); font-weight: 900; }
-        .cell.error { background: rgba(255, 82, 82, 0.2) !important; color: var(--wrong) !important; }
+        .cell.focus-num { background: rgba(255,255,255,0.05); color: var(--accent); text-shadow: 0 0 8px var(--accent); font-weight: 900; }
+        .cell.fixed { color: var(--text); opacity: 0.5; font-weight: bold; }
+        .cell.error { color: #ff5252 !important; text-shadow: 0 0 5px #ff5252; }
         
-        /* 3x3 Grid Bold Lines */
+        /* Box separators */
         .cell:nth-child(3n) { border-right: 2px solid var(--accent); }
         .cell:nth-child(9n) { border-right: none; }
         .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--accent); }
 
-        .btn-row { display: flex; gap: 8px; margin-top: 15px; width: 95vw; max-width: 400px; z-index: 5; }
-        button { padding: 12px; border-radius: 8px; border: 1px solid var(--accent); font-weight: bold; cursor: pointer; flex: 1; background: rgba(0,0,0,0.7); color: var(--accent); text-transform: uppercase; }
-
         #numpad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; width: 95vw; max-width: 400px; z-index: 5; }
-        .num-btn { padding: 15px 0; background: rgba(0,0,0,0.8); border-radius: 10px; text-align: center; font-weight: 900; font-size: 22px; border: 2px solid #333; color: #888; transition: 0.2s; }
-        .num-btn.active-num { background: var(--accent); border-color: #fff; color: #000; box-shadow: 0 0 15px var(--accent); transform: scale(1.05); }
+        .num-btn { 
+            padding: 15px 0; background: rgba(0,0,0,0.8); border-radius: 10px; text-align: center; 
+            font-weight: 900; font-size: 20px; border: 2px solid #333; color: #666; transition: 0.3s;
+        }
+        .num-btn.active-num { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 15px var(--accent); }
+        .num-btn.completed { opacity: 0; pointer-events: none; transform: scale(0.5); } /* Hidden when 9/9 done */
     </style>
 </head>
-<body>
+<body class="theme-cyber">
     <div id="bubble-layer"></div>
 
     <div class="header">
-        <select id="diff" onchange="newGame()" style="background: #000; color: var(--accent); border: 1px solid var(--accent); padding: 5px; border-radius: 5px;">
+        <div class="stat-box">Time: <span id="timer">00:00</span></div>
+        <div style="font-weight:900; color: var(--accent); letter-spacing: 2px;">SUDOKU</div>
+        <div class="stat-box">Best: <span id="best">--:--</span></div>
+    </div>
+
+    <div class="controls">
+        <select id="diff" onchange="newGame()">
             <option value="30">Easy</option>
             <option value="45" selected>Mid</option>
             <option value="60">Hard</option>
         </select>
-        <div class="stats">
-            <div class="stat-box">Time: <span id="timer">00:00</span></div>
-            <div class="stat-box">Best: <span id="best">--:--</span></div>
-        </div>
+        <select id="theme-sel" onchange="applyTheme()">
+            <option value="cyber">Cyber Pink</option>
+            <option value="lava">Lava Burn</option>
+            <option value="matrix">Matrix Green</option>
+            <option value="void">Deep Void</option>
+        </select>
     </div>
 
     <div id="grid"></div>
 
-    <div class="btn-row">
-        <button onclick="newGame()">Reset ⚡</button>
-        <button onclick="erase()" style="border-color: #ff5252; color: #ff5252;">Eraser ✖</button>
+    <div class="controls" style="margin-top:10px;">
+        <button class="btn-main" onclick="newGame()">NEW GEN ⚡</button>
+        <button class="btn-main" onclick="erase()" style="color:#ff5252; border-color:#ff5252">ERASE ✖</button>
     </div>
 
     <div id="numpad"></div>
@@ -90,7 +110,6 @@
         let board = [], solution = [], isFixed = [], selected = null, activeNum = null;
         let timer = 0, timerInterval = null;
 
-        // Prevent scrolling/bouncing
         document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
         function solve(grid) {
@@ -121,39 +140,22 @@
         function spawnBubbles() {
             const layer = document.getElementById('bubble-layer');
             layer.innerHTML = '';
-            for(let i=0; i<20; i++) {
+            for(let i=0; i<25; i++) {
                 const b = document.createElement('div');
                 b.className = 'b-obj';
                 const s = Math.random() * 40 + 10;
                 b.style.width = s + 'px'; b.style.height = s + 'px';
                 b.style.left = Math.random() * 100 + '%';
-                b.style.animationDuration = (Math.random() * 5 + 5) + 's';
+                b.style.animationDuration = (Math.random() * 6 + 4) + 's';
                 b.style.animationDelay = -(Math.random() * 10) + 's';
                 layer.appendChild(b);
             }
         }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            timer = 0;
-            timerInterval = setInterval(() => {
-                timer++;
-                let m = Math.floor(timer/60).toString().padStart(2,'0');
-                let s = (timer%60).toString().padStart(2,'0');
-                document.getElementById('timer').innerText = `${m}:${s}`;
-            }, 1000);
-        }
-
-        function updateBestScore() {
-            const diff = document.getElementById('diff').value;
-            const saved = localStorage.getItem(`sudoku_best_${diff}`);
-            if (saved) {
-                let m = Math.floor(saved/60).toString().padStart(2,'0');
-                let s = (saved%60).toString().padStart(2,'0');
-                document.getElementById('best').innerText = `${m}:${s}`;
-            } else {
-                document.getElementById('best').innerText = "--:--";
-            }
+        function applyTheme() {
+            document.body.className = 'theme-' + document.getElementById('theme-sel').value;
+            spawnBubbles();
+            tg.HapticFeedback.impactOccurred('medium');
         }
 
         function newGame() {
@@ -171,21 +173,37 @@
             for(let r=0; r<9; r++) for(let c=0; c<9; c++) if(board[r][c] !== 0) isFixed[r][c] = true;
             
             selected = null; activeNum = null; 
-            startTimer(); updateBestScore(); render(); spawnBubbles();
+            clearInterval(timerInterval); timer = 0;
+            timerInterval = setInterval(() => {
+                timer++;
+                let m = Math.floor(timer/60).toString().padStart(2,'0');
+                let s = (timer%60).toString().padStart(2,'0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+            }, 1000);
+
+            const diff = document.getElementById('diff').value;
+            const saved = localStorage.getItem(`sudoku_best_v2_${diff}`);
+            document.getElementById('best').innerText = saved ? `${Math.floor(saved/60).toString().padStart(2,'0')}:${(saved%60).toString().padStart(2,'0')}` : "--:--";
+            
+            render(); spawnBubbles();
         }
 
         function render() {
             const container = document.getElementById('grid');
             container.innerHTML = '';
+            
+            // Count occurrences for numpad clearing
+            const counts = {};
+            for(let i=1; i<=9; i++) counts[i] = 0;
+
             board.forEach((row, r) => {
                 row.forEach((val, c) => {
+                    if (val !== 0 && val === solution[r][c]) counts[val]++;
+                    
                     const cell = document.createElement('div');
                     cell.className = 'cell' + (isFixed[r][c] ? ' fixed' : '');
                     if (selected?.r === r && selected?.c === c) cell.classList.add('selected');
-                    
-                    // NUMBER LOCK HIGHLIGHT: This is what you asked for
                     if (activeNum && val === activeNum) cell.classList.add('focus-num');
-                    
                     if (val !== 0 && !isFixed[r][c] && val !== solution[r][c]) cell.classList.add('error');
                     
                     cell.innerText = val || '';
@@ -194,16 +212,24 @@
                 });
             });
             
-            const btns = document.querySelectorAll('.num-btn');
-            btns.forEach((btn, i) => {
-                btn.className = 'num-btn' + (activeNum === (i+1) ? ' active-num' : '');
-            });
+            // Update Numpad visibility
+            for(let i=1; i<=9; i++) {
+                const btn = document.getElementById(`num-${i}`);
+                if (counts[i] >= 9) {
+                    btn.classList.add('completed');
+                    if (activeNum === i) activeNum = null; // Auto-unlock if completed
+                } else {
+                    btn.classList.remove('completed');
+                }
+                btn.className = 'num-btn' + (activeNum === i ? ' active-num' : '') + (counts[i] >= 9 ? ' completed' : '');
+            }
 
-            checkWin();
+            if (!board.flat().includes(0) && JSON.stringify(board) === JSON.stringify(solution)) {
+                handleWin();
+            }
         }
 
         function handleCellClick(r, c) {
-            // If a number is "Locked" (activeNum), tapping a cell immediately places it
             if (activeNum && !isFixed[r][c]) {
                 board[r][c] = (board[r][c] === activeNum) ? 0 : activeNum;
                 if (board[r][c] !== 0) {
@@ -216,9 +242,8 @@
         }
 
         function selectNum(n) {
-            // Locking logic: Pressing the same number again unlocks it
             activeNum = (activeNum === n) ? null : n;
-            tg.HapticFeedback.impactOccurred('medium');
+            tg.HapticFeedback.impactOccurred('light');
             render();
         }
 
@@ -229,27 +254,22 @@
             }
         }
 
-        function checkWin() {
-            if (board.flat().includes(0)) return;
-            for(let r=0; r<9; r++) for(let c=0; c<9; c++) if(board[r][c] !== solution[r][c]) return;
-            
+        function handleWin() {
             clearInterval(timerInterval);
             const diff = document.getElementById('diff').value;
-            const saved = localStorage.getItem(`sudoku_best_${diff}`);
+            const saved = localStorage.getItem(`sudoku_best_v2_${diff}`);
             if (!saved || timer < saved) {
-                localStorage.setItem(`sudoku_best_${diff}`, timer);
-                alert("NEW BEST TIME! 🏆");
-            } else {
-                alert("Sudoku Cleared!");
+                localStorage.setItem(`sudoku_best_v2_${diff}`, timer);
+                tg.HapticFeedback.notificationOccurred('success');
+                alert("CLEARED! New Best Time!");
             }
-            tg.HapticFeedback.notificationOccurred('success');
             newGame();
         }
 
-        // Generate Numpad
         const numpad = document.getElementById('numpad');
         for(let i=1; i<=9; i++) {
             const btn = document.createElement('div');
+            btn.id = `num-${i}`;
             btn.className = 'num-btn'; btn.innerText = i;
             btn.onclick = () => selectNum(i);
             numpad.appendChild(btn);
