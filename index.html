@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SUDOKU NEON LEGEND v6.0</title>
+    <title>SUDOKU NEON LEGEND v7.0</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { 
             --bg: #050505; --text: #f0f0f0; --grid: #333; 
-            --cell: rgba(20, 20, 20, 0.85); --accent: #00f2ff; 
-            --bubble: rgba(0, 242, 255, 0.3);
+            --cell: rgba(15, 15, 15, 0.9); --accent: #00f2ff; 
+            --bubble: rgba(0, 242, 255, 0.4);
         }
 
-        /* Dark Themes */
-        body.theme-cyber { --bg: #0a000a; --accent: #ff00ff; --bubble: rgba(255, 0, 255, 0.3); }
-        body.theme-lava { --bg: #0f0202; --accent: #ff4d00; --bubble: rgba(255, 77, 0, 0.3); }
-        body.theme-matrix { --bg: #000800; --accent: #00ff41; --bubble: rgba(0, 255, 65, 0.3); }
-        body.theme-void { --bg: #050a1a; --accent: #7000ff; --bubble: rgba(112, 0, 255, 0.3); }
+        /* Dynamic Theme Syncing */
+        body.theme-cyber { --bg: #0a000a; --accent: #ff00ff; --bubble: rgba(255, 0, 255, 0.4); }
+        body.theme-lava { --bg: #0f0202; --accent: #ff4d00; --bubble: rgba(255, 77, 0, 0.4); }
+        body.theme-matrix { --bg: #000800; --accent: #00ff41; --bubble: rgba(0, 255, 65, 0.4); }
+        body.theme-void { --bg: #050a1a; --accent: #7000ff; --bubble: rgba(112, 0, 255, 0.4); }
 
         html, body { 
             position: fixed; overflow: hidden; width: 100%; height: 100%; 
@@ -26,9 +26,8 @@
         }
 
         #bubble-layer { position: absolute; width: 100%; height: 100%; z-index: -1; overflow: hidden; pointer-events: none; }
-        .b-obj { position: absolute; background: var(--bubble); filter: blur(2px); box-shadow: 0 0 15px var(--bubble); animation: floatU 10s infinite linear; }
+        .b-obj { position: absolute; background: var(--bubble); filter: blur(3px); box-shadow: 0 0 20px var(--bubble); animation: floatU 10s infinite linear; }
         
-        /* Floating Shapes per theme */
         .theme-cyber .b-obj { border-radius: 50%; }
         .theme-lava .b-obj { transform: rotate(45deg); border-radius: 20%; }
         .theme-matrix .b-obj { border-radius: 0; width: 2px !important; }
@@ -37,37 +36,46 @@
         @keyframes floatU { from { transform: translateY(110vh) rotate(0); } to { transform: translateY(-15vh) rotate(360deg); } }
 
         .header { width: 95vw; max-width: 400px; display: flex; justify-content: space-between; margin: 15px 0 10px; z-index: 5; }
-        .stat-box { background: rgba(0,0,0,0.6); border: 1px solid var(--accent); padding: 5px 8px; border-radius: 8px; font-size: 12px; box-shadow: 0 0 10px var(--accent); }
+        .stat-box { background: rgba(0,0,0,0.6); border: 2px solid var(--accent); padding: 5px 8px; border-radius: 8px; font-size: 12px; box-shadow: 0 0 15px var(--accent); }
 
         .controls { width: 95vw; max-width: 400px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; z-index: 5; }
-        select, .btn-main { background: rgba(0,0,0,0.8); color: var(--accent); border: 1px solid var(--accent); padding: 10px; border-radius: 8px; font-weight: bold; }
+        select, .btn-main { background: rgba(0,0,0,0.8); color: var(--accent); border: 2px solid var(--accent); padding: 10px; border-radius: 8px; font-weight: bold; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
         #grid { 
             display: grid; grid-template-columns: repeat(9, 1fr); 
-            border: 2px solid var(--accent); background: var(--grid); 
+            border: 3px solid var(--accent); background: var(--grid); 
             gap: 1px; width: 95vw; max-width: 400px; aspect-ratio: 1; z-index: 5;
+            box-shadow: 0 0 25px rgba(0,0,0,0.5), 0 0 10px var(--accent);
         }
         .cell { 
             background: var(--cell); display: flex; align-items: center; justify-content: center; 
-            font-size: 19px; transition: 0.15s;
+            font-size: 20px; transition: 0.1s; color: #fff;
         }
-        .cell.selected { background: rgba(255,255,255,0.1); box-shadow: inset 0 0 0 2px var(--accent); }
-        .cell.focus-num { background: rgba(255,255,255,0.05); color: var(--accent); text-shadow: 0 0 8px var(--accent); font-weight: 900; }
-        .cell.fixed { color: var(--text); opacity: 0.5; font-weight: bold; }
-        .cell.error { color: #ff5252 !important; text-shadow: 0 0 5px #ff5252; }
+        .cell.selected { background: rgba(255,255,255,0.15); box-shadow: inset 0 0 0 2px var(--accent); }
         
-        /* Box separators */
+        /* THE GLOW FIX: Linked directly to --accent */
+        .cell.focus-num { 
+            background: rgba(255, 255, 255, 0.1); 
+            color: var(--accent) !important; 
+            text-shadow: 0 0 12px var(--accent), 0 0 20px var(--accent); 
+            font-weight: 900; 
+            font-size: 24px;
+        }
+        
+        .cell.fixed { color: var(--text); opacity: 0.4; font-weight: bold; }
+        .cell.error { color: #ff5252 !important; text-shadow: 0 0 10px #ff5252; background: rgba(255,0,0,0.1); }
+        
         .cell:nth-child(3n) { border-right: 2px solid var(--accent); }
         .cell:nth-child(9n) { border-right: none; }
         .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 2px solid var(--accent); }
 
-        #numpad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; width: 95vw; max-width: 400px; z-index: 5; }
+        #numpad { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 15px; width: 95vw; max-width: 400px; z-index: 5; }
         .num-btn { 
-            padding: 15px 0; background: rgba(0,0,0,0.8); border-radius: 10px; text-align: center; 
-            font-weight: 900; font-size: 20px; border: 2px solid #333; color: #666; transition: 0.3s;
+            padding: 15px 0; background: rgba(0,0,0,0.8); border-radius: 12px; text-align: center; 
+            font-weight: 900; font-size: 22px; border: 2px solid #222; color: #444; transition: 0.2s;
         }
-        .num-btn.active-num { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 15px var(--accent); }
-        .num-btn.completed { opacity: 0; pointer-events: none; transform: scale(0.5); } /* Hidden when 9/9 done */
+        .num-btn.active-num { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 20px var(--accent); transform: scale(1.1); background: #000; }
+        .num-btn.completed { opacity: 0; pointer-events: none; transform: scale(0.4); }
     </style>
 </head>
 <body class="theme-cyber">
@@ -75,15 +83,15 @@
 
     <div class="header">
         <div class="stat-box">Time: <span id="timer">00:00</span></div>
-        <div style="font-weight:900; color: var(--accent); letter-spacing: 2px;">SUDOKU</div>
+        <div style="font-weight:900; color: var(--accent); letter-spacing: 3px; text-shadow: 0 0 10px var(--accent);">NEON SUDOKU</div>
         <div class="stat-box">Best: <span id="best">--:--</span></div>
     </div>
 
     <div class="controls">
         <select id="diff" onchange="newGame()">
-            <option value="30">Easy</option>
-            <option value="45" selected>Mid</option>
-            <option value="60">Hard</option>
+            <option value="30">Tier: Easy</option>
+            <option value="45" selected>Tier: Mid</option>
+            <option value="60">Tier: Hard</option>
         </select>
         <select id="theme-sel" onchange="applyTheme()">
             <option value="cyber">Cyber Pink</option>
@@ -140,13 +148,13 @@
         function spawnBubbles() {
             const layer = document.getElementById('bubble-layer');
             layer.innerHTML = '';
-            for(let i=0; i<25; i++) {
+            for(let i=0; i<30; i++) {
                 const b = document.createElement('div');
                 b.className = 'b-obj';
-                const s = Math.random() * 40 + 10;
+                const s = Math.random() * 45 + 15;
                 b.style.width = s + 'px'; b.style.height = s + 'px';
                 b.style.left = Math.random() * 100 + '%';
-                b.style.animationDuration = (Math.random() * 6 + 4) + 's';
+                b.style.animationDuration = (Math.random() * 7 + 3) + 's';
                 b.style.animationDelay = -(Math.random() * 10) + 's';
                 layer.appendChild(b);
             }
@@ -155,6 +163,7 @@
         function applyTheme() {
             document.body.className = 'theme-' + document.getElementById('theme-sel').value;
             spawnBubbles();
+            render(); // Refresh highlights with new color
             tg.HapticFeedback.impactOccurred('medium');
         }
 
@@ -182,7 +191,7 @@
             }, 1000);
 
             const diff = document.getElementById('diff').value;
-            const saved = localStorage.getItem(`sudoku_best_v2_${diff}`);
+            const saved = localStorage.getItem(`sudoku_best_v3_${diff}`);
             document.getElementById('best').innerText = saved ? `${Math.floor(saved/60).toString().padStart(2,'0')}:${(saved%60).toString().padStart(2,'0')}` : "--:--";
             
             render(); spawnBubbles();
@@ -191,8 +200,6 @@
         function render() {
             const container = document.getElementById('grid');
             container.innerHTML = '';
-            
-            // Count occurrences for numpad clearing
             const counts = {};
             for(let i=1; i<=9; i++) counts[i] = 0;
 
@@ -212,12 +219,11 @@
                 });
             });
             
-            // Update Numpad visibility
             for(let i=1; i<=9; i++) {
                 const btn = document.getElementById(`num-${i}`);
                 if (counts[i] >= 9) {
                     btn.classList.add('completed');
-                    if (activeNum === i) activeNum = null; // Auto-unlock if completed
+                    if (activeNum === i) activeNum = null;
                 } else {
                     btn.classList.remove('completed');
                 }
@@ -257,12 +263,12 @@
         function handleWin() {
             clearInterval(timerInterval);
             const diff = document.getElementById('diff').value;
-            const saved = localStorage.getItem(`sudoku_best_v2_${diff}`);
+            const saved = localStorage.getItem(`sudoku_best_v3_${diff}`);
             if (!saved || timer < saved) {
-                localStorage.setItem(`sudoku_best_v2_${diff}`, timer);
+                localStorage.setItem(`sudoku_best_v3_${diff}`, timer);
                 tg.HapticFeedback.notificationOccurred('success');
-                alert("CLEARED! New Best Time!");
             }
+            alert("SUDOKU LEGEND STATUS ATTAINED! 🏆");
             newGame();
         }
 
